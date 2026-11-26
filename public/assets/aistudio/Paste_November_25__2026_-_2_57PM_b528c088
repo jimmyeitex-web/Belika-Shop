@@ -1,0 +1,338 @@
+-rw-------. 1 u0_a349 u0_a349 18671 Nov 24 22:33 assets/polo-lightgray.jpg
+-rw-------. 1 u0_a349 u0_a349 33831 Nov 24 22:33 assets/polo-tan.jpg
+-rw-------. 1 u0_a349 u0_a349 20433 Nov 24 22:33 assets/polo-white.jpg
+npm notice run belikashop@1.0.0 npx
+npm notice run 'expo' install react-native-gesture-handler @react-native-async-storage/async-storage
+› Installing 2 SDK 58.0.0 compatible native modules using npm
+> npm install
+
+up to date, audited 469 packages in 6s
+
+43 packages are looking for funding
+  run `npm fund` for details
+
+3 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+npm notice run belikashop@1.0.0 npx
+npm notice run 'tsc' --noEmit
+App.backup-20261125-013719.tsx:173:42 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+  Overload 2 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>, context: any): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+
+173       <StatusBar barStyle="dark-content" backgroundColor={COLORS.paper} />
+                                             ~~~~~~~~~~~~~~~
+
+
+App.backup-20261125-013719.tsx:440:37 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+440   productRealPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 12 },
+                                        ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.backup-20261125-013719.tsx:443:33 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+443   photoTapArea: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
+                                    ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.backup-20261125-025142.tsx:727:42 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+  Overload 2 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>, context: any): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+
+727       <StatusBar barStyle="dark-content" backgroundColor={COLORS.paper} />
+                                             ~~~~~~~~~~~~~~~
+
+
+App.backup-20261125-025142.tsx:1340:37 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+1340   productRealPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 12 },
+                                         ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.backup-20261125-025142.tsx:1343:33 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+1343   photoTapArea: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
+                                     ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.before-offline-MVP-20261125-021614.tsx:274:42 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+  Overload 2 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>, context: any): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+
+274       <StatusBar barStyle="dark-content" backgroundColor={COLORS.paper} />
+                                             ~~~~~~~~~~~~~~~
+
+
+App.before-offline-MVP-20261125-021614.tsx:645:37 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+645   productRealPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 12 },
+                                        ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.before-offline-MVP-20261125-021614.tsx:648:33 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+648   photoTapArea: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
+                                    ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.before-offline-MVP-20261125-021735.tsx:274:42 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+  Overload 2 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>, context: any): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+
+274       <StatusBar barStyle="dark-content" backgroundColor={COLORS.paper} />
+                                             ~~~~~~~~~~~~~~~
+
+
+App.before-offline-MVP-20261125-021735.tsx:645:37 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+645   productRealPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 12 },
+                                        ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.before-offline-MVP-20261125-021735.tsx:648:33 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+648   photoTapArea: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
+                                    ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.before-pinch-fix-20261125-015617.tsx:293:42 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+  Overload 2 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>, context: any): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+
+293       <StatusBar barStyle="dark-content" backgroundColor={COLORS.paper} />
+                                             ~~~~~~~~~~~~~~~
+
+
+App.before-pinch-fix-20261125-015617.tsx:660:37 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+660   productRealPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 12 },
+                                        ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.before-pinch-fix-20261125-015617.tsx:663:33 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+663   photoTapArea: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
+                                    ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.before-redesign.tsx:614:29 - error TS2339: Property 'scrollTo' does not exist on type '((props: Omit<ScrollViewProps, "ref"> & { ref?: Ref<ScrollViewInstance> | undefined; }) => ReactNode) & Readonly<{ Context: Context<...>; }>'.
+
+614     staffScrollRef.current?.scrollTo({ y: 0, animated: true });
+                                ~~~~~~~~
+
+App.before-redesign.tsx:907:42 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+  Overload 2 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>, context: any): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+
+907       <StatusBar barStyle="dark-content" backgroundColor={COLORS.paper} />
+                                             ~~~~~~~~~~~~~~~
+
+
+App.before-redesign.tsx:1323:23 - error TS2322: Type 'RefObject<(((props: Omit<ScrollViewProps, "ref"> & { ref?: Ref<ScrollViewInstance> | undefined; }) => ReactNode) & Readonly<...>) | null>' is not assignable to type 'Ref<ScrollViewInstance> | undefined'.
+  Type 'RefObject<(((props: Omit<ScrollViewProps, "ref"> & { ref?: Ref<ScrollViewInstance> | undefined; }) => ReactNode) & Readonly<...>) | null>' is not assignable to type 'RefObject<ScrollViewInstance | null>'.
+    Type '(((props: Omit<ScrollViewProps, "ref"> & { ref?: Ref<ScrollViewInstance> | undefined; }) => ReactNode) & Readonly<{ ...; }>) | null' is not assignable to type 'ScrollViewInstance | null'.
+      Type '((props: Omit<ScrollViewProps, "ref"> & { ref?: Ref<ScrollViewInstance> | undefined; }) => ReactNode) & Readonly<{ Context: Context<...>; }>' is not assignable to type 'ScrollViewInstance | null'.
+
+1323           <ScrollView ref={staffScrollRef} contentContainerStyle={styles.staffContent} keyboardShouldPersistTaps="handled">
+                           ~~~
+
+  node_modules/react-native/types_generated/Libraries/Components/ScrollView/ScrollView.d.ts:639:3
+    639   ref?: React.Ref<ScrollViewInstance> | undefined;
+          ~~~
+    The expected type comes from property 'ref' which is declared here on type 'IntrinsicAttributes & Omit<ScrollViewProps, "ref"> & { ref?: Ref<ScrollViewInstance> | undefined; }'
+
+App.before-redesign.tsx:1608:37 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+1608   productRealPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 12 },
+                                         ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.before-redesign.tsx:1611:33 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+1611   photoTapArea: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
+                                     ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.home-v1.tsx:131:42 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+  Overload 2 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>, context: any): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+
+131       <StatusBar barStyle="dark-content" backgroundColor={COLORS.paper} />
+                                             ~~~~~~~~~~~~~~~
+
+
+App.tsx:614:29 - error TS2339: Property 'scrollTo' does not exist on type '((props: Omit<ScrollViewProps, "ref"> & { ref?: Ref<ScrollViewInstance> | undefined; }) => ReactNode) & Readonly<{ Context: Context<...>; }>'.
+
+614     staffScrollRef.current?.scrollTo({ y: 0, animated: true });
+                                ~~~~~~~~
+
+App.tsx:907:42 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+  Overload 2 of 2, '(props: Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | "animated" | "barStyle"> & Omit<Readonly<{ hidden?: boolean | undefined; animated?: boolean | undefined; barStyle?: "auto" | ... 3 more ... | undefined; }>, never>>, context: any): StatusBar', gave the following error.
+    Type '{ barStyle: "dark-content"; backgroundColor: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+      Property 'backgroundColor' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<StatusBar> & Readonly<Readonly<Omit<Readonly<{ showHideTransition?: "fade" | "slide" | "none" | undefined; }>, "hidden" | ... 1 more ... | "barStyle"> & Omit<...>>>'.
+
+907       <StatusBar barStyle="dark-content" backgroundColor={COLORS.paper} />
+                                             ~~~~~~~~~~~~~~~
+
+
+App.tsx:1323:23 - error TS2322: Type 'RefObject<(((props: Omit<ScrollViewProps, "ref"> & { ref?: Ref<ScrollViewInstance> | undefined; }) => ReactNode) & Readonly<...>) | null>' is not assignable to type 'Ref<ScrollViewInstance> | undefined'.
+  Type 'RefObject<(((props: Omit<ScrollViewProps, "ref"> & { ref?: Ref<ScrollViewInstance> | undefined; }) => ReactNode) & Readonly<...>) | null>' is not assignable to type 'RefObject<ScrollViewInstance | null>'.
+    Type '(((props: Omit<ScrollViewProps, "ref"> & { ref?: Ref<ScrollViewInstance> | undefined; }) => ReactNode) & Readonly<{ ...; }>) | null' is not assignable to type 'ScrollViewInstance | null'.
+      Type '((props: Omit<ScrollViewProps, "ref"> & { ref?: Ref<ScrollViewInstance> | undefined; }) => ReactNode) & Readonly<{ Context: Context<...>; }>' is not assignable to type 'ScrollViewInstance | null'.
+
+1323           <ScrollView ref={staffScrollRef} contentContainerStyle={styles.staffContent} keyboardShouldPersistTaps="handled">
+                           ~~~
+
+  node_modules/react-native/types_generated/Libraries/Components/ScrollView/ScrollView.d.ts:639:3
+    639   ref?: React.Ref<ScrollViewInstance> | undefined;
+          ~~~
+    The expected type comes from property 'ref' which is declared here on type 'IntrinsicAttributes & Omit<ScrollViewProps, "ref"> & { ref?: Ref<ScrollViewInstance> | undefined; }'
+
+App.tsx:1608:37 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+1608   productRealPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 12 },
+                                         ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+App.tsx:1611:33 - error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof import("/data/data/com.termux/files/home/BelikaShop/node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports")'. Did you mean 'absoluteFill'?
+
+1611   photoTapArea: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
+                                     ~~~~~~~~~~~~~~~~~~
+
+  node_modules/react-native/types_generated/Libraries/StyleSheet/StyleSheetExports.d.ts:47:22
+    47 export declare const absoluteFill: AbsoluteFillStyle;
+                            ~~~~~~~~~~~~
+    'absoluteFill' is declared here.
+
+
+Found 26 errors in 8 files.
+
+Errors  Files
+     3  App.backup-20261125-013719.tsx:173
+     3  App.backup-20261125-025142.tsx:727
+     3  App.before-offline-MVP-20261125-021614.tsx:274
+     3  App.before-offline-MVP-20261125-021735.tsx:274
+     3  App.before-pinch-fix-20261125-015617.tsx:293
+     5  App.before-redesign.tsx:614
+     1  App.home-v1.tsx:131
+     5  App.tsx:614
+npm notice run belikashop@1.0.0 npx
+npm notice run 'expo' start -c
+Starting project at /data/data/com.termux/files/home/BelikaShop
+ ERROR  An unknown error occurred while installing React Native DevTools. Details:
+
+Cannot read properties of undefined (reading 'arm64')
+Starting Metro Bundler
+
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+█ ▄▄▄▄▄ █   █▄▀▀▄██ ▄▄▄▄▄ █
+█ █   █ █ ▀▄ █▀█▄▄█ █   █ █
+█ █▄▄▄█ █▀██▀▀█▀▄██ █▄▄▄█ █
+█▄▄▄▄▄▄▄█▄▀▄█ █▄█▄█▄▄▄▄▄▄▄█
+█▄ ▀▀ ▄▄▀▀▀▀▄▀█▄ █▀█ ▀▄▄ ▄█
+██▀▀██▄▄▀ █▀ ▄██▄ ▀▀▀   ▀██
+█▀▀▄▄▀▀▄█ ▀▄█▄▀▄▀▄▀▄ ▀▄ ▀██
+███ ▀██▄ ▀ ▀█▀██ ▀▄███ ▀███
+█▄▄██▄▄▄█▀ █▄▀█▄  ▄▄▄ ▀ ▄▄█
+█ ▄▄▄▄▄ █▀█▀ ▄██▀ █▄█ ▀▀█▀█
+█ █   █ █▄█ █▄▀▄▀▄▄ ▄▄▀   █
+█ █▄▄▄█ █▀ ▄█▀█▀▄▄▄ ▀█▀▀ ██
+█▄▄▄▄▄▄▄█▄██▄▄▄▄████▄▄▄▄▄▄█
+
+› Scan the QR code above to open in Expo Go.
+› Metro: exp://10.61.192.88:8081
+
+› Using Expo Go (Press s to switch to development build)
+› Press ? │ show all commands
+
+Logs for your project will appear below. Press Ctrl+C to exit.
+Android Bundled 34728ms index.ts (1221 modules)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context

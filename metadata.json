@@ -1,0 +1,6 @@
+{
+  "name": "Belika Shop",
+  "description": "Belika Shop — Ethiopian fashion boutique storefront and staff inventory & order workspace.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

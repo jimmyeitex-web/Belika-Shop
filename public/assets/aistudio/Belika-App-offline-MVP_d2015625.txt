@@ -1,0 +1,1437 @@
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Animated,
+  Alert,
+  Image,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+type Department = 'All' | 'Men' | 'Women' | 'Kids';
+type Language = 'en' | 'am';
+
+type ProductVariant = {
+  id: string;
+  size: string;
+  color: string;
+  stock: number;
+};
+
+type Product = {
+  id: string;
+  department: Exclude<Department, 'All'>;
+  name: string;
+  nameAm: string;
+  price: number;
+  sizes: string;
+  emoji: string;
+  tint: string;
+  images?: any[];
+  imageLabels?: string[];
+  variants?: ProductVariant[];
+  status?: 'draft' | 'published';
+};
+
+type CartItem = {
+  id: string;
+  productId: string;
+  variantId: string;
+  size: string;
+  color: string;
+  quantity: number;
+};
+
+type OrderStatus = 'requested' | 'confirmed' | 'completed' | 'cancelled';
+
+type StoreOrder = {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  fulfillment: 'pickup' | 'delivery';
+  items: CartItem[];
+  total: number;
+  status: OrderStatus;
+  createdAt: string;
+};
+
+type StockMovement = {
+  id: string;
+  productId: string;
+  variantId: string;
+  kind: 'restock' | 'sale' | 'order' | 'return';
+  quantity: number;
+  createdAt: string;
+};
+
+const PRODUCTS: Product[] = [
+  { id: 'cotton-tee', department: 'Men', name: 'Cotton T-shirt', nameAm: 'የጥጥ ቲሸርት', price: 3000, sizes: 'M–XXL', emoji: '👕', tint: '#E8E2D7' },
+  { id: 'cargo', department: 'Men', name: 'Cargo trousers', nameAm: 'ካርጎ ሱሪ', price: 4500, sizes: 'M–3XL', emoji: '👖', tint: '#D8DDCF' },
+  { id: 'jeans-shirt', department: 'Men', name: 'Jeans shirt jacket', nameAm: 'የጂንስ ሸሚዝ ጃኬት', price: 4800, sizes: 'M–XXL', emoji: '👔', tint: '#DCE4EB' },
+  { id: 'diplomat-jacket', department: 'Men', name: 'Diplomat jacket', nameAm: 'ዲፕሎማት ጃኬት', price: 7500, sizes: 'L–XXL', emoji: '🧥', tint: '#DFE0E3' },
+  {
+    id: 'polo',
+    department: 'Men',
+    name: 'Polo T-shirt',
+    nameAm: 'ፖሎ ቲሸርት',
+    price: 3200,
+    sizes: 'M–XXL',
+    emoji: '👕',
+    tint: '#E3E8EC',
+    images: [
+      require('./assets/polo-tan.jpg'),
+      require('./assets/polo-white.jpg'),
+      require('./assets/polo-lightgray.jpg'),
+    ],
+    imageLabels: ['Tan', 'White', 'Pale grey'],
+  },
+  { id: 'kemis', department: 'Women', name: 'Kemis dress', nameAm: 'ቀሚስ', price: 1800, sizes: 'Free size', emoji: '👗', tint: '#F1E1E2' },
+  { id: 'comfort-flats', department: 'Women', name: 'Comfort flats', nameAm: 'ምቹ ጫማ', price: 3200, sizes: 'Sizes available', emoji: '🥿', tint: '#EAE0D6' },
+];
+
+const getInitialSizes = (sizes: string) => {
+  if (sizes === 'M–XXL') return ['M', 'L', 'XL', 'XXL'];
+  if (sizes === 'M–3XL') return ['M', 'L', 'XL', 'XXL', '3XL'];
+  if (sizes === 'L–XXL') return ['L', 'XL', 'XXL'];
+  if (sizes === 'Free size') return ['Free size'];
+  return ['Unspecified'];
+};
+
+const DEFAULT_PRODUCTS: Product[] = PRODUCTS.map((product) => {
+  const colors = product.imageLabels?.length ? product.imageLabels : ['Unspecified'];
+  const variants = getInitialSizes(product.sizes).flatMap((size, sizeIndex) =>
+    colors.map((color, colorIndex) => ({
+      id: `${product.id}-v${sizeIndex}-${colorIndex}`,
+      size,
+      color,
+      stock: 3,
+    })),
+  );
+  return { ...product, variants, status: 'published' };
+});
+
+const STORAGE_KEYS = {
+  products: 'belika:v1:products',
+  cart: 'belika:v1:cart',
+  favorites: 'belika:v1:favorites',
+  orders: 'belika:v1:orders',
+  movements: 'belika:v1:movements',
+};
+
+const COPY = {
+  en: {
+    search: 'Search Belika products',
+    departments: 'Shop by department',
+    featured: 'A few picks to start',
+    all: 'All',
+    men: 'Men',
+    women: 'Women',
+    kids: 'Kids',
+    bannerTop: 'BELIKA  /  EVERYDAY STYLE',
+    bannerTitle: 'Find your next favourite.',
+    bannerText: 'Explore styles for Men, Women and Kids.',
+    bannerButton: 'Explore products',
+    add: 'Add',
+    sizes: 'Sizes',
+    demo: 'Demo catalog · confirm price, size and stock with the shop',
+    empty: 'No matching products yet.',
+    kidsSoon: 'Kids products will appear here when we add examples.',
+    wishlist: 'Wishlist',
+    cart: 'Demo cart',
+    cartItems: 'item(s) added. Checkout comes later.',
+    samplePhoto: 'SAMPLE PHOTO',
+    viewDetails: 'View details',
+    details: 'Product details',
+    chooseSize: 'Choose a size',
+    sizeHelp: 'Sizes are based on the post. Confirm current availability with the shop.',
+    photoHelp: 'Colors are visual estimates from these photos; confirm color and availability with the shop.',
+    addToCart: 'Add to cart',
+    cartTitle: 'Your cart',
+    emptyCart: 'Your cart is empty.',
+    subtotal: 'Subtotal',
+    checkoutLater: 'Prototype only: request is saved on this phone; no payment or message is sent.',
+    remove: 'Remove',
+    staff: 'Staff',
+    staffTitle: 'Store tools',
+    localOnly: 'Saved on this phone only. Not synced or protected for real customer data.',
+    productName: 'Product name',
+    productNameAm: 'Amharic name',
+    priceETB: 'Price in ETB',
+    department: 'Department',
+    colors: 'Colors',
+    sizesInput: 'Sizes, comma separated',
+    colorsInput: 'Colors, comma separated',
+    addDraft: 'Add as draft',
+    draft: 'Draft',
+    published: 'Published',
+    verifyPublish: 'Verify & publish',
+    stock: 'Stock',
+    restock: 'Restock +1',
+    recordSale: 'Record sale −1',
+    orders: 'Order requests',
+    noOrders: 'No order requests yet.',
+    orderRequest: 'Request this order',
+    customerName: 'Customer name',
+    customerPhone: 'Contact phone',
+    fulfillment: 'How should the customer receive it?',
+    pickup: 'Pickup',
+    delivery: 'Delivery',
+    submitRequest: 'Save order request',
+    requested: 'Requested',
+    confirmOrder: 'Confirm & reserve stock',
+    completeOrder: 'Mark completed',
+    cancelOrder: 'Cancel',
+    stockError: 'Not enough stock for this order.',
+    chooseVariant: 'Choose a size and color.',
+    remaining: 'available',
+    outOfStock: 'Out of stock',
+    orderSaved: 'Order request saved on this phone.',
+    contactRequired: 'Enter a customer name and contact phone.',
+    sampleWarning: 'Sample stock is only for testing. Replace it with verified counts.',
+    confirmed: 'Confirmed',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    total: 'Total',
+    inventoryHistory: 'Recent stock movements',
+    noMovements: 'No stock movements recorded yet.',
+    addProductHelp: 'New products stay hidden until a staff member verifies and publishes them.',
+    productFieldsRequired: 'Enter the names, a valid price, and at least one size and color.',
+  },
+  am: {
+    search: 'የቤሊካ ምርቶችን ይፈልጉ',
+    departments: 'በክፍል ይምረጡ',
+    featured: 'ለመጀመር የተመረጡ',
+    all: 'ሁሉም',
+    men: 'ወንዶች',
+    women: 'ሴቶች',
+    kids: 'ልጆች',
+    bannerTop: 'ቤሊካ  / የዕለት ተዕለት ዘይቤ',
+    bannerTitle: 'የሚወዱትን ዘይቤ ያግኙ።',
+    bannerText: 'የወንዶች፣ የሴቶች እና የልጆች ምርቶችን ይመልከቱ።',
+    bannerButton: 'ምርቶችን ይመልከቱ',
+    add: 'ጨምር',
+    sizes: 'መጠን',
+    demo: 'የሙከራ ካታሎግ · ዋጋን፣ መጠንን እና ክምችትን ያረጋግጡ',
+    empty: 'የሚዛመድ ምርት አልተገኘም።',
+    kidsSoon: 'የልጆች ምርቶችን ስናክል እዚህ ይታያሉ።',
+    wishlist: 'የምወዳቸው',
+    cart: 'የሙከራ ጋሪ',
+    cartItems: 'እቃ(ዎች) ተጨምረዋል። ግዢ በኋላ ይጨመራል።',
+    samplePhoto: 'የናሙና ምስል',
+    viewDetails: 'ዝርዝሩን ይመልከቱ',
+    details: 'የምርት ዝርዝር',
+    chooseSize: 'መጠን ይምረጡ',
+    sizeHelp: 'መጠኖቹ ከፖስቱ የተወሰዱ ናቸው፤ ከሱቁ ጋር ያረጋግጡ።',
+    photoHelp: 'ቀለሞቹ ከፎቶዎቹ የተገመቱ ናቸው፤ ከሱቁ ጋር ያረጋግጡ።',
+    addToCart: 'ወደ ጋሪ ጨምር',
+    cartTitle: 'ጋሪዎ',
+    emptyCart: 'ጋሪዎ ባዶ ነው።',
+    subtotal: 'ንዑስ ድምር',
+    checkoutLater: 'የሙከራ ብቻ፦ ጥያቄው በዚህ ስልክ ይቀመጣል፤ ክፍያም ሆነ መልዕክት አይላክም።',
+    remove: 'አስወግድ',
+    staff: 'ሰራተኞች',
+    staffTitle: 'የሱቅ መቆጣጠሪያ',
+    localOnly: 'በዚህ ስልክ ላይ ብቻ ይቀመጣል፤ አይመሳሰልም እና ለእውነተኛ የደንበኛ መረጃ ደህንነቱ አልተረጋገጠም።',
+    productName: 'የምርት ስም',
+    productNameAm: 'የአማርኛ ስም',
+    priceETB: 'ዋጋ በብር',
+    department: 'ክፍል',
+    colors: 'ቀለሞች',
+    sizesInput: 'መጠኖች፣ በኮማ ይለዩ',
+    colorsInput: 'ቀለሞች፣ በኮማ ይለዩ',
+    addDraft: 'እንደ ረቂቅ ጨምር',
+    draft: 'ረቂቅ',
+    published: 'ታትሟል',
+    verifyPublish: 'አረጋግጥ እና አትም',
+    stock: 'ክምችት',
+    restock: 'ክምችት +1',
+    recordSale: 'ሽያጭ መዝግብ −1',
+    orders: 'የትዕዛዝ ጥያቄዎች',
+    noOrders: 'ገና የትዕዛዝ ጥያቄ የለም።',
+    orderRequest: 'ይህን ትዕዛዝ ጠይቅ',
+    customerName: 'የደንበኛ ስም',
+    customerPhone: 'ስልክ ቁጥር',
+    fulfillment: 'ደንበኛው እንዴት ይቀበለው?',
+    pickup: 'በሱቅ መውሰድ',
+    delivery: 'ማድረስ',
+    submitRequest: 'የትዕዛዝ ጥያቄ አስቀምጥ',
+    requested: 'ተጠይቋል',
+    confirmOrder: 'አረጋግጥ እና ክምችት ያዝ',
+    completeOrder: 'ተጠናቋል ብለህ ምልክት አድርግ',
+    cancelOrder: 'ሰርዝ',
+    stockError: 'ለዚህ ትዕዛዝ በቂ ክምችት የለም።',
+    chooseVariant: 'መጠንና ቀለም ይምረጡ።',
+    remaining: 'ቀሪ',
+    outOfStock: 'ከክምችት ውጪ',
+    orderSaved: 'የትዕዛዝ ጥያቄው በዚህ ስልክ ተቀምጧል።',
+    contactRequired: 'የደንበኛ ስምና ስልክ ያስገቡ።',
+    sampleWarning: 'የናሙና ክምችት ለሙከራ ብቻ ነው። በተረጋገጠ ቁጥር ይተኩ።',
+    confirmed: 'ተረጋግጧል',
+    completed: 'ተጠናቋል',
+    cancelled: 'ተሰርዟል',
+    total: 'ድምር',
+    inventoryHistory: 'የቅርብ የክምችት ለውጦች',
+    noMovements: 'ገና የክምችት ለውጥ አልተመዘገበም።',
+    addProductHelp: 'አዲስ ምርቶች ሰራተኛ እስኪያረጋግጥና እስኪያትም ድረስ ይደበቃሉ።',
+    productFieldsRequired: 'ስሞቹን፣ ትክክለኛ ዋጋን፣ ቢያንስ አንድ መጠንና ቀለም ያስገቡ።',
+  },
+};
+
+const COLORS = {
+  ink: '#27262D',
+  orange: '#E79A50',
+  paper: '#F7F5F0',
+  white: '#FFFFFF',
+  muted: '#77747B',
+  line: '#EAE6DF',
+};
+
+function ZoomablePhoto({
+  source,
+  resizeMode,
+}: {
+  source: any;
+  resizeMode: 'contain' | 'cover';
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const currentScale = useRef(1);
+  const startScale = useRef(1);
+  const pinchGesture = useMemo(
+    () =>
+      Gesture.Pinch()
+        .runOnJS(true)
+        .onBegin(() => {
+          startScale.current = currentScale.current;
+        })
+        .onUpdate((event) => {
+          const nextScale = Math.min(3, Math.max(1, startScale.current * event.scale));
+          currentScale.current = nextScale;
+          scale.setValue(nextScale);
+        })
+        .onEnd(() => {
+          startScale.current = currentScale.current;
+        }),
+    [scale],
+  );
+
+  return (
+    <GestureDetector gesture={pinchGesture}>
+      <View style={styles.zoomTouchArea} collapsable={false}>
+        <Animated.Image
+          source={source}
+          style={[styles.detailRealPhoto, { transform: [{ scale }] }]}
+          resizeMode={resizeMode}
+        />
+      </View>
+    </GestureDetector>
+  );
+}
+
+export default function App() {
+  const [language, setLanguage] = useState<Language>('en');
+  const [department, setDepartment] = useState<Department>('All');
+  const [query, setQuery] = useState('');
+  const [products, setProducts] = useState<Product[]>(DEFAULT_PRODUCTS);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [showWishlist, setShowWishlist] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [showCart, setShowCart] = useState(false);
+  const [showStaff, setShowStaff] = useState(false);
+  const [showOrderRequest, setShowOrderRequest] = useState(false);
+  const [orders, setOrders] = useState<StoreOrder[]>([]);
+  const [movements, setMovements] = useState<StockMovement[]>([]);
+  const [storageReady, setStorageReady] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [newName, setNewName] = useState('');
+  const [newNameAm, setNewNameAm] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [newDepartment, setNewDepartment] = useState<Exclude<Department, 'All'>>('Men');
+  const [newSizes, setNewSizes] = useState('M, L, XL');
+  const [newColors, setNewColors] = useState('Unspecified');
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [fulfillment, setFulfillment] = useState<'pickup' | 'delivery'>('pickup');
+  const t = COPY[language];
+
+  useEffect(() => {
+    let active = true;
+    const loadSavedStore = async () => {
+      try {
+        const entries = await AsyncStorage.multiGet(Object.values(STORAGE_KEYS));
+        const saved = new Map(entries);
+        const savedProducts = saved.get(STORAGE_KEYS.products);
+        const savedCart = saved.get(STORAGE_KEYS.cart);
+        const savedFavorites = saved.get(STORAGE_KEYS.favorites);
+        const savedOrders = saved.get(STORAGE_KEYS.orders);
+        const savedMovements = saved.get(STORAGE_KEYS.movements);
+        if (savedProducts) {
+          const parsed = JSON.parse(savedProducts);
+          if (Array.isArray(parsed)) setProducts(parsed);
+        }
+        if (savedCart) {
+          const parsed = JSON.parse(savedCart);
+          if (Array.isArray(parsed)) setCartItems(parsed);
+        }
+        if (savedFavorites) {
+          const parsed = JSON.parse(savedFavorites);
+          if (Array.isArray(parsed)) setFavorites(parsed);
+        }
+        if (savedOrders) {
+          const parsed = JSON.parse(savedOrders);
+          if (Array.isArray(parsed)) setOrders(parsed);
+        }
+        if (savedMovements) {
+          const parsed = JSON.parse(savedMovements);
+          if (Array.isArray(parsed)) setMovements(parsed);
+        }
+      } catch (error) {
+        console.warn('Could not load Belika local data', error);
+      } finally {
+        if (active) setStorageReady(true);
+      }
+    };
+    void loadSavedStore();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!storageReady) return;
+    void AsyncStorage.multiSet([
+      [STORAGE_KEYS.products, JSON.stringify(products)],
+      [STORAGE_KEYS.cart, JSON.stringify(cartItems)],
+      [STORAGE_KEYS.favorites, JSON.stringify(favorites)],
+      [STORAGE_KEYS.orders, JSON.stringify(orders)],
+      [STORAGE_KEYS.movements, JSON.stringify(movements)],
+    ]).catch((error) => console.warn('Could not save Belika local data', error));
+  }, [storageReady, products, cartItems, favorites, orders, movements]);
+
+  const cartCount = useMemo(
+    () => cartItems.reduce((count, item) => count + item.quantity, 0),
+    [cartItems],
+  );
+  const cartSubtotal = useMemo(
+    () =>
+      cartItems.reduce((total, item) => {
+        const product = products.find((candidate) => candidate.id === item.productId);
+        return total + (product?.price ?? 0) * item.quantity;
+      }, 0),
+    [cartItems, products],
+  );
+
+  const results = useMemo(() => {
+    const search = query.trim().toLowerCase();
+    return products.filter((product) => {
+      if (product.status === 'draft') return false;
+      const inDepartment = department === 'All' || product.department === department;
+      const matchesSearch =
+        !search ||
+        product.name.toLowerCase().includes(search) ||
+        product.nameAm.includes(query.trim());
+      const isSaved = !showWishlist || favorites.includes(product.id);
+      return inDepartment && matchesSearch && isSaved;
+    });
+  }, [products, department, query, showWishlist, favorites]);
+
+  const sizeOptions = (product: Product): string[] => {
+    if (product.variants?.length) {
+      return [...new Set(product.variants.map((variant) => variant.size))];
+    }
+    if (product.sizes === 'M–XXL') return ['M', 'L', 'XL', 'XXL'];
+    if (product.sizes === 'M–3XL') return ['M', 'L', 'XL', 'XXL', '3XL'];
+    if (product.sizes === 'L–XXL') return ['L', 'XL', 'XXL'];
+    if (product.sizes === 'Free size') return ['Free size'];
+    return ['Unspecified'];
+  };
+
+  const colorOptions = (product: Product, size?: string | null): string[] => {
+    const variants = product.variants ?? [];
+    return [...new Set(
+      variants
+        .filter((variant) => !size || variant.size === size)
+        .map((variant) => variant.color),
+    )];
+  };
+
+  const findVariant = (product: Product, size: string, color: string) =>
+    product.variants?.find((variant) => variant.size === size && variant.color === color);
+
+  const departmentLabel = (item: Department) => {
+    if (language === 'en') return item;
+    return { All: t.all, Men: t.men, Women: t.women, Kids: t.kids }[item];
+  };
+
+  const toggleFavorite = (id: string) => {
+    setFavorites((current) =>
+      current.includes(id) ? current.filter((saved) => saved !== id) : [...current, id],
+    );
+  };
+
+  const addToCart = (product: Product, size: string | null, color: string | null) => {
+    if (!size || !color) {
+      Alert.alert(t.chooseVariant);
+      return false;
+    }
+    const variant = findVariant(product, size, color);
+    if (!variant) {
+      Alert.alert(t.chooseVariant);
+      return false;
+    }
+    const itemId = `${product.id}::${variant.id}`;
+    const existing = cartItems.find((item) => item.id === itemId);
+    if (variant.stock <= (existing?.quantity ?? 0)) {
+      Alert.alert(t.outOfStock, t.stockError);
+      return false;
+    }
+    setCartItems((current) => {
+      const existing = current.find((item) => item.id === itemId);
+      if (existing) {
+        return current.map((item) =>
+          item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item,
+        );
+      }
+      return [...current, {
+        id: itemId,
+        productId: product.id,
+        variantId: variant.id,
+        size,
+        color,
+        quantity: 1,
+      }];
+    });
+    return true;
+  };
+
+  const changeCartQuantity = (itemId: string, difference: number) => {
+    const item = cartItems.find((candidate) => candidate.id === itemId);
+    if (!item) return;
+    const product = products.find((candidate) => candidate.id === item.productId);
+    const variant = product?.variants?.find((candidate) => candidate.id === item.variantId);
+    if (difference > 0 && variant && item.quantity >= variant.stock) {
+      Alert.alert(t.outOfStock, t.stockError);
+      return;
+    }
+    setCartItems((current) =>
+      current.map((item) =>
+        item.id === itemId
+          ? { ...item, quantity: Math.max(1, item.quantity + difference) }
+          : item,
+      ),
+    );
+  };
+
+  const adjustStock = (
+    productId: string,
+    variantId: string,
+    difference: number,
+    kind: StockMovement['kind'],
+  ) => {
+    const product = products.find((item) => item.id === productId);
+    const variant = product?.variants?.find((item) => item.id === variantId);
+    if (!variant) return;
+    if (difference < 0 && variant.stock < Math.abs(difference)) {
+      Alert.alert(t.outOfStock);
+      return;
+    }
+    setProducts((current) =>
+      current.map((item) =>
+        item.id !== productId
+          ? item
+          : {
+              ...item,
+              variants: item.variants?.map((entry) =>
+                entry.id === variantId
+                  ? { ...entry, stock: Math.max(0, entry.stock + difference) }
+                  : entry,
+              ),
+            },
+      ),
+    );
+    setMovements((current) => [{
+      id: `move-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      productId,
+      variantId,
+      kind,
+      quantity: difference,
+      createdAt: new Date().toISOString(),
+    }, ...current].slice(0, 200));
+  };
+
+  const addDraftProduct = () => {
+    const price = Number(newPrice);
+    const sizeList = newSizes.split(',').map((item) => item.trim()).filter(Boolean);
+    const colorList = newColors.split(',').map((item) => item.trim()).filter(Boolean);
+    if (!newName.trim() || !newNameAm.trim() || !Number.isFinite(price) || price <= 0 || !sizeList.length || !colorList.length) {
+      Alert.alert(t.addDraft, t.productFieldsRequired);
+      return;
+    }
+    const id = `draft-${Date.now()}`;
+    const variants = sizeList.flatMap((size, sizeIndex) =>
+      colorList.map((color, colorIndex) => ({
+        id: `${id}-v${sizeIndex}-${colorIndex}`,
+        size,
+        color,
+        stock: 0,
+      })),
+    );
+    const product: Product = {
+      id,
+      department: newDepartment,
+      name: newName.trim(),
+      nameAm: newNameAm.trim(),
+      price,
+      sizes: sizeList.join(', '),
+      emoji: '🛍️',
+      tint: '#E8E2D7',
+      variants,
+      status: 'draft',
+    };
+    setProducts((current) => [product, ...current]);
+    setNewName('');
+    setNewNameAm('');
+    setNewPrice('');
+    Alert.alert(t.draft, t.verifyPublish);
+  };
+
+  const requestOrder = () => {
+    if (!cartItems.length) return;
+    if (!customerName.trim() || !customerPhone.trim()) {
+      Alert.alert(t.contactRequired);
+      return;
+    }
+    const order: StoreOrder = {
+      id: `BL-${Date.now().toString().slice(-6)}`,
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim(),
+      fulfillment,
+      items: cartItems.map((item) => ({ ...item })),
+      total: cartSubtotal,
+      status: 'requested',
+      createdAt: new Date().toISOString(),
+    };
+    setOrders((current) => [order, ...current]);
+    setCartItems([]);
+    setCustomerName('');
+    setCustomerPhone('');
+    setShowOrderRequest(false);
+    setShowCart(false);
+    Alert.alert(order.id, t.orderSaved);
+  };
+
+  const updateOrderStatus = (orderId: string, nextStatus: OrderStatus) => {
+    const order = orders.find((item) => item.id === orderId);
+    if (!order) return;
+    if (nextStatus === 'confirmed' && order.status === 'requested') {
+      const enoughStock = order.items.every((line) => {
+        const product = products.find((item) => item.id === line.productId);
+        const variant = product?.variants?.find((item) => item.id === line.variantId);
+        return Boolean(variant && variant.stock >= line.quantity);
+      });
+      if (!enoughStock) {
+        Alert.alert(t.stockError);
+        return;
+      }
+      setProducts((current) =>
+        current.map((product) => ({
+          ...product,
+          variants: product.variants?.map((variant) => {
+            const line = order.items.find(
+              (item) => item.productId === product.id && item.variantId === variant.id,
+            );
+            return line ? { ...variant, stock: variant.stock - line.quantity } : variant;
+          }),
+        })),
+      );
+      setMovements((current) => [
+        ...order.items.map((line) => ({
+          id: `move-${Date.now()}-${line.id}`,
+          productId: line.productId,
+          variantId: line.variantId,
+          kind: 'order' as const,
+          quantity: -line.quantity,
+          createdAt: new Date().toISOString(),
+        })),
+        ...current,
+      ].slice(0, 200));
+    } else if (nextStatus === 'cancelled' && order.status === 'confirmed') {
+      setProducts((current) =>
+        current.map((product) => ({
+          ...product,
+          variants: product.variants?.map((variant) => {
+            const line = order.items.find(
+              (item) => item.productId === product.id && item.variantId === variant.id,
+            );
+            return line ? { ...variant, stock: variant.stock + line.quantity } : variant;
+          }),
+        })),
+      );
+      setMovements((current) => [
+        ...order.items.map((line) => ({
+          id: `return-${Date.now()}-${line.id}`,
+          productId: line.productId,
+          variantId: line.variantId,
+          kind: 'return' as const,
+          quantity: line.quantity,
+          createdAt: new Date().toISOString(),
+        })),
+        ...current,
+      ].slice(0, 200));
+    }
+    setOrders((current) =>
+      current.map((item) => item.id === orderId ? { ...item, status: nextStatus } : item),
+    );
+  };
+
+  const removeCartItem = (itemId: string) => {
+    setCartItems((current) => current.filter((item) => item.id !== itemId));
+  };
+
+  const departments: Department[] = ['All', 'Men', 'Women', 'Kids'];
+
+  const openProductDetails = (product: Product) => {
+    setSelectedProduct(product);
+    setSelectedSize(null);
+    setSelectedColor(null);
+    setSelectedImageIndex(0);
+  };
+  const selectedVariant =
+    selectedProduct && selectedSize && selectedColor
+      ? findVariant(selectedProduct, selectedSize, selectedColor)
+      : undefined;
+
+  if (!storageReady) {
+    return (
+      <GestureHandlerRootView style={styles.gestureRoot}>
+        <SafeAreaView style={styles.safe}>
+          <Text style={styles.loadingText}>Belika…</Text>
+        </SafeAreaView>
+      </GestureHandlerRootView>
+    );
+  }
+
+  return (
+    <GestureHandlerRootView style={styles.gestureRoot}>
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.paper} />
+      <View style={styles.header}>
+        <View style={styles.brand}>
+          <View style={styles.brandMark}><Text style={styles.brandMarkText}>B</Text></View>
+          <View>
+            <Text style={styles.brandName}>Belika</Text>
+            <Text style={styles.brandSub}>MEN  ·  WOMEN  ·  KIDS</Text>
+          </View>
+        </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.smallButton} onPress={() => setLanguage(language === 'en' ? 'am' : 'en')}>
+            <Text style={styles.languageText}>{language === 'en' ? 'አማ' : 'EN'}</Text>
+          </TouchableOpacity>
+          <View style={styles.headerIconWrap}>
+            <TouchableOpacity style={styles.iconButton} onPress={() => setShowWishlist(!showWishlist)}>
+              <Text style={styles.iconText}>{showWishlist ? '♥' : '♡'}</Text>
+            </TouchableOpacity>
+            {favorites.length > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{favorites.length}</Text>
+              </View>
+            )}
+          </View>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => setShowCart(true)}
+          >
+            <Text style={styles.iconText}>▱</Text>
+            {cartCount > 0 && <View style={styles.cartBadge}><Text style={styles.cartBadgeText}>{cartCount}</Text></View>}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => setShowStaff(true)}
+            accessibilityLabel={t.staff}
+          >
+            <Text style={styles.iconText}>⚙</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.searchBox}>
+          <Text style={styles.searchIcon}>⌕</Text>
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder={t.search}
+            placeholderTextColor={COLORS.muted}
+            style={styles.searchInput}
+          />
+        </View>
+
+        <View style={styles.banner}>
+          <Text style={styles.bannerTop}>{t.bannerTop}</Text>
+          <Text style={styles.bannerTitle}>{t.bannerTitle}</Text>
+          <Text style={styles.bannerText}>{t.bannerText}</Text>
+          <TouchableOpacity
+            style={styles.bannerButton}
+            onPress={() => { setShowWishlist(false); setDepartment('All'); setQuery(''); }}
+          >
+            <Text style={styles.bannerButtonText}>{t.bannerButton}  →</Text>
+          </TouchableOpacity>
+          <View style={styles.bannerAccent} />
+        </View>
+
+        <Text style={styles.sectionTitle}>{t.departments}</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+          {departments.map((item) => (
+            <TouchableOpacity
+              key={item}
+              onPress={() => { setDepartment(item); setShowWishlist(false); }}
+              style={[styles.chip, department === item && !showWishlist && styles.chipActive]}
+            >
+              <Text style={[styles.chipText, department === item && !showWishlist && styles.chipTextActive]}>
+                {departmentLabel(item)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        <View style={styles.listHeading}>
+          <Text style={styles.sectionTitle}>{showWishlist ? t.wishlist : t.featured}</Text>
+          <Text style={styles.countText}>{results.length}</Text>
+        </View>
+
+        {results.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyIcon}>{showWishlist ? '♡' : '⌕'}</Text>
+            <Text style={styles.emptyText}>
+              {department === 'Kids' && !showWishlist ? t.kidsSoon : t.empty}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {results.map((product) => (
+              <View key={product.id} style={styles.card}>
+                <View style={[styles.productPhoto, { backgroundColor: product.tint }]}>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    style={styles.photoTapArea}
+                    onPress={() => openProductDetails(product)}
+                  >
+                    {product.images && product.images.length > 0 ? (
+                      <Image source={product.images[0]} style={styles.productRealPhoto} resizeMode="cover" />
+                    ) : (
+                      <Text style={styles.productEmoji}>{product.emoji}</Text>
+                    )}
+                    {(!product.images || product.images.length === 0) && (
+                      <Text style={styles.photoLabel}>{t.samplePhoto}</Text>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.heartButton} onPress={() => toggleFavorite(product.id)}>
+                    <Text style={styles.heartText}>{favorites.includes(product.id) ? '♥' : '♡'}</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity onPress={() => openProductDetails(product)}>
+                  <Text style={styles.productName} numberOfLines={2}>
+                    {language === 'en' ? product.name : product.nameAm}
+                  </Text>
+                  <Text style={styles.detailsLink}>{t.viewDetails} →</Text>
+                </TouchableOpacity>
+                <Text style={styles.sizeText}>{t.sizes}: {product.sizes}</Text>
+                <View style={styles.cardBottom}>
+                  <Text style={styles.price}>ETB {product.price.toLocaleString('en-US')}</Text>
+                  <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={() => openProductDetails(product)}
+                  >
+                    <Text style={styles.addButtonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <Text style={styles.demoNote}>{t.demo}</Text>
+      </ScrollView>
+
+      <Modal
+        visible={selectedProduct !== null}
+        animationType="slide"
+        onRequestClose={() => setSelectedProduct(null)}
+      >
+        <GestureHandlerRootView style={styles.gestureRoot}>
+        <SafeAreaView style={styles.modalSafe}>
+          {selectedProduct && (
+            <>
+              <View style={styles.detailHeader}>
+                <TouchableOpacity onPress={() => setSelectedProduct(null)} style={styles.backButton}>
+                  <Text style={styles.backText}>‹</Text>
+                </TouchableOpacity>
+                <Text style={styles.detailHeaderTitle}>{t.details}</Text>
+                <View style={styles.backButton} />
+              </View>
+              <ScrollView contentContainerStyle={styles.detailContent}>
+                <View style={[styles.detailPhoto, { backgroundColor: selectedProduct.tint }]}>
+                  {selectedProduct.images && selectedProduct.images.length > 0 ? (
+                    <ZoomablePhoto
+                      key={`${selectedProduct.id}-${selectedImageIndex}`}
+                      source={selectedProduct.images[selectedImageIndex] ?? selectedProduct.images[0]}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <>
+                      <Text style={styles.detailEmoji}>{selectedProduct.emoji}</Text>
+                      <Text style={styles.photoLabel}>{t.samplePhoto}</Text>
+                    </>
+                  )}
+                  {selectedProduct.images && selectedProduct.images.length > 1 && (
+                    <View style={styles.photoCounter}>
+                      <Text style={styles.photoCounterText}>
+                        {selectedImageIndex + 1} / {selectedProduct.images.length}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                {selectedProduct.images && selectedProduct.images.length > 1 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.galleryRow}>
+                    {selectedProduct.images.map((image, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        onPress={() => setSelectedImageIndex(index)}
+                        style={[styles.galleryThumb, selectedImageIndex === index && styles.galleryThumbActive]}
+                      >
+                        <Image source={image} style={styles.galleryThumbImage} resizeMode="cover" />
+                        <Text style={styles.galleryCaption}>{selectedProduct.imageLabels?.[index] ?? ''}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
+                <Text style={styles.detailName}>
+                  {language === 'en' ? selectedProduct.name : selectedProduct.nameAm}
+                </Text>
+                <Text style={styles.detailPrice}>
+                  ETB {selectedProduct.price.toLocaleString('en-US')}
+                </Text>
+                <Text style={styles.detailSizeLabel}>{t.chooseSize}</Text>
+                <View style={styles.sizeRow}>
+                  {sizeOptions(selectedProduct).map((size) => (
+                    <TouchableOpacity
+                      key={size}
+                      onPress={() => {
+                        setSelectedSize(size);
+                        if (!colorOptions(selectedProduct, size).includes(selectedColor ?? '')) {
+                          setSelectedColor(null);
+                        }
+                      }}
+                      style={[styles.sizeChip, selectedSize === size && styles.sizeChipActive]}
+                    >
+                      <Text style={[styles.sizeChipText, selectedSize === size && styles.sizeChipTextActive]}>
+                        {size}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={styles.detailSizeLabel}>{t.colors}</Text>
+                <View style={styles.sizeRow}>
+                  {colorOptions(selectedProduct, selectedSize).map((color) => (
+                    <TouchableOpacity
+                      key={color}
+                      onPress={() => setSelectedColor(color)}
+                      style={[styles.sizeChip, selectedColor === color && styles.sizeChipActive]}
+                    >
+                      <Text style={[styles.sizeChipText, selectedColor === color && styles.sizeChipTextActive]}>
+                        {color}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={styles.detailNote}>
+                  {selectedVariant
+                    ? selectedVariant.stock > 0
+                      ? `${selectedVariant.stock} ${t.remaining}`
+                      : t.outOfStock
+                    : t.chooseVariant}
+                </Text>
+
+                <Text style={styles.detailNote}>{t.sizeHelp}</Text>
+                <Text style={styles.detailNote}>{t.photoHelp}</Text>
+
+                <TouchableOpacity
+                  style={styles.detailAddButton}
+                  onPress={() => {
+                    if (selectedProduct && addToCart(selectedProduct, selectedSize, selectedColor)) {
+                      setSelectedProduct(null);
+                    }
+                  }}
+                >
+                  <Text style={styles.detailAddButtonText}>{t.addToCart}  +</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </>
+          )}
+        </SafeAreaView>
+        </GestureHandlerRootView>
+      </Modal>
+
+      <Modal
+        visible={showCart}
+        animationType="slide"
+        onRequestClose={() => setShowCart(false)}
+      >
+        <SafeAreaView style={styles.cartModalSafe}>
+          <View style={styles.cartHeader}>
+            <TouchableOpacity onPress={() => setShowCart(false)} style={styles.backButton}>
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.cartHeaderTitle}>{t.cartTitle}</Text>
+            <View style={styles.backButton} />
+          </View>
+
+          {cartItems.length === 0 ? (
+            <View style={styles.emptyCartBox}>
+              <Text style={styles.emptyIcon}>▱</Text>
+              <Text style={styles.emptyText}>{t.emptyCart}</Text>
+            </View>
+          ) : (
+            <>
+              <ScrollView contentContainerStyle={styles.cartContent}>
+                {cartItems.map((item) => {
+                  const product = products.find((candidate) => candidate.id === item.productId);
+                  if (!product) return null;
+                  return (
+                    <View key={item.id} style={styles.cartItem}>
+                      <View style={[styles.cartThumb, { backgroundColor: product.tint }]}>
+                        {product.images && product.images.length > 0 ? (
+                          <Image source={product.images[0]} style={styles.cartThumbImage} resizeMode="cover" />
+                        ) : (
+                          <Text style={styles.cartThumbEmoji}>{product.emoji}</Text>
+                        )}
+                      </View>
+                      <View style={styles.cartItemInfo}>
+                        <Text style={styles.cartItemName}>
+                          {language === 'en' ? product.name : product.nameAm}
+                        </Text>
+                        <Text style={styles.cartItemMeta}>
+                          {`${t.sizes}: ${item.size} · ${item.color}`}
+                        </Text>
+                        <Text style={styles.cartItemPrice}>
+                          ETB {product.price.toLocaleString('en-US')}
+                        </Text>
+                        <View style={styles.cartControls}>
+                          <TouchableOpacity
+                            style={styles.quantityButton}
+                            onPress={() => changeCartQuantity(item.id, -1)}
+                          >
+                            <Text style={styles.quantityButtonText}>−</Text>
+                          </TouchableOpacity>
+                          <Text style={styles.quantityText}>{item.quantity}</Text>
+                          <TouchableOpacity
+                            style={styles.quantityButton}
+                            onPress={() => changeCartQuantity(item.id, 1)}
+                          >
+                            <Text style={styles.quantityButtonText}>+</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.removeButton}
+                            onPress={() => removeCartItem(item.id)}
+                          >
+                            <Text style={styles.removeText}>{t.remove}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+              <View style={styles.cartFooter}>
+                <View style={styles.cartSubtotalRow}>
+                  <Text style={styles.cartSubtotalLabel}>{t.subtotal}</Text>
+                  <Text style={styles.cartSubtotalValue}>
+                    ETB {cartSubtotal.toLocaleString('en-US')}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.orderRequestButton}
+                  onPress={() => setShowOrderRequest(true)}
+                >
+                  <Text style={styles.orderRequestButtonText}>{t.orderRequest}</Text>
+                </TouchableOpacity>
+                <Text style={styles.checkoutNote}>{t.checkoutLater}</Text>
+              </View>
+            </>
+          )}
+        </SafeAreaView>
+      </Modal>
+
+      <Modal
+        visible={showOrderRequest}
+        animationType="slide"
+        onRequestClose={() => setShowOrderRequest(false)}
+      >
+        <SafeAreaView style={styles.cartModalSafe}>
+          <View style={styles.cartHeader}>
+            <TouchableOpacity onPress={() => setShowOrderRequest(false)} style={styles.backButton}>
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.cartHeaderTitle}>{t.orderRequest}</Text>
+            <View style={styles.backButton} />
+          </View>
+          <ScrollView contentContainerStyle={styles.formContent} keyboardShouldPersistTaps="handled">
+            <Text style={styles.localWarning}>{t.localOnly}</Text>
+            <TextInput
+              value={customerName}
+              onChangeText={setCustomerName}
+              placeholder={t.customerName}
+              placeholderTextColor={COLORS.muted}
+              style={styles.formInput}
+            />
+            <TextInput
+              value={customerPhone}
+              onChangeText={setCustomerPhone}
+              placeholder={t.customerPhone}
+              placeholderTextColor={COLORS.muted}
+              keyboardType="phone-pad"
+              style={styles.formInput}
+            />
+            <Text style={styles.formLabel}>{t.fulfillment}</Text>
+            <View style={styles.sizeRow}>
+              {(['pickup', 'delivery'] as const).map((choice) => (
+                <TouchableOpacity
+                  key={choice}
+                  onPress={() => setFulfillment(choice)}
+                  style={[styles.sizeChip, fulfillment === choice && styles.sizeChipActive]}
+                >
+                  <Text style={[styles.sizeChipText, fulfillment === choice && styles.sizeChipTextActive]}>
+                    {choice === 'pickup' ? t.pickup : t.delivery}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.cartSubtotalValue}>
+              {t.total}: ETB {cartSubtotal.toLocaleString('en-US')}
+            </Text>
+            <TouchableOpacity style={styles.primaryButton} onPress={requestOrder}>
+              <Text style={styles.primaryButtonText}>{t.submitRequest}</Text>
+            </TouchableOpacity>
+            <Text style={styles.checkoutNote}>{t.checkoutLater}</Text>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      <Modal
+        visible={showStaff}
+        animationType="slide"
+        onRequestClose={() => setShowStaff(false)}
+      >
+        <SafeAreaView style={styles.staffSafe}>
+          <View style={styles.cartHeader}>
+            <TouchableOpacity onPress={() => setShowStaff(false)} style={styles.backButton}>
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.cartHeaderTitle}>{t.staffTitle}</Text>
+            <View style={styles.backButton} />
+          </View>
+          <ScrollView contentContainerStyle={styles.staffContent} keyboardShouldPersistTaps="handled">
+            <Text style={styles.localWarning}>{t.localOnly}</Text>
+            <Text style={styles.demoNote}>{t.sampleWarning}</Text>
+
+            <Text style={styles.staffSectionTitle}>{t.orders}</Text>
+            {orders.length === 0 ? (
+              <Text style={styles.emptyText}>{t.noOrders}</Text>
+            ) : (
+              orders.map((order) => (
+                <View key={order.id} style={styles.staffCard}>
+                  <Text style={styles.staffCardTitle}>{order.id} · {order.status === 'requested'
+                    ? t.requested
+                    : order.status === 'confirmed'
+                      ? t.confirmed
+                      : order.status === 'completed'
+                        ? t.completed
+                        : t.cancelled}</Text>
+                  <Text style={styles.staffMeta}>{order.customerName} · {order.customerPhone}</Text>
+                  <Text style={styles.staffMeta}>
+                    {order.fulfillment === 'pickup' ? t.pickup : t.delivery} · {order.items.reduce((sum, item) => sum + item.quantity, 0)} · ETB {order.total.toLocaleString('en-US')}
+                  </Text>
+                  {order.items.map((line) => {
+                    const product = products.find((item) => item.id === line.productId);
+                    return (
+                      <Text key={`${order.id}-${line.id}`} style={styles.staffMeta}>
+                        {product?.name ?? line.productId} · {line.size} / {line.color} × {line.quantity}
+                      </Text>
+                    );
+                  })}
+                  {order.status === 'requested' && (
+                    <View style={styles.staffActions}>
+                      <TouchableOpacity
+                        style={styles.primarySmallButton}
+                        onPress={() => updateOrderStatus(order.id, 'confirmed')}
+                      >
+                        <Text style={styles.primarySmallButtonText}>{t.confirmOrder}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.secondarySmallButton}
+                        onPress={() => updateOrderStatus(order.id, 'cancelled')}
+                      >
+                        <Text style={styles.secondarySmallButtonText}>{t.cancelOrder}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                  {order.status === 'confirmed' && (
+                    <View style={styles.staffActions}>
+                      <TouchableOpacity
+                        style={styles.primarySmallButton}
+                        onPress={() => updateOrderStatus(order.id, 'completed')}
+                      >
+                        <Text style={styles.primarySmallButtonText}>{t.completeOrder}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.secondarySmallButton}
+                        onPress={() => updateOrderStatus(order.id, 'cancelled')}
+                      >
+                        <Text style={styles.secondarySmallButtonText}>{t.cancelOrder}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              ))
+            )}
+
+            <Text style={styles.staffSectionTitle}>{t.addDraft}</Text>
+            <Text style={styles.staffMeta}>{t.addProductHelp}</Text>
+            <TextInput value={newName} onChangeText={setNewName} placeholder={t.productName} placeholderTextColor={COLORS.muted} style={styles.formInput} />
+            <TextInput value={newNameAm} onChangeText={setNewNameAm} placeholder={t.productNameAm} placeholderTextColor={COLORS.muted} style={styles.formInput} />
+            <TextInput value={newPrice} onChangeText={setNewPrice} placeholder={t.priceETB} placeholderTextColor={COLORS.muted} keyboardType="numeric" style={styles.formInput} />
+            <Text style={styles.formLabel}>{t.department}</Text>
+            <View style={styles.sizeRow}>
+              {(['Men', 'Women', 'Kids'] as const).map((choice) => (
+                <TouchableOpacity
+                  key={choice}
+                  onPress={() => setNewDepartment(choice)}
+                  style={[styles.sizeChip, newDepartment === choice && styles.sizeChipActive]}
+                >
+                  <Text style={[styles.sizeChipText, newDepartment === choice && styles.sizeChipTextActive]}>
+                    {departmentLabel(choice)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TextInput value={newSizes} onChangeText={setNewSizes} placeholder={t.sizesInput} placeholderTextColor={COLORS.muted} style={styles.formInput} />
+            <TextInput value={newColors} onChangeText={setNewColors} placeholder={t.colorsInput} placeholderTextColor={COLORS.muted} style={styles.formInput} />
+            <TouchableOpacity style={styles.primaryButton} onPress={addDraftProduct}>
+              <Text style={styles.primaryButtonText}>{t.addDraft}</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.staffSectionTitle}>{t.stock}</Text>
+            {products.map((product) => (
+              <View key={product.id} style={styles.staffCard}>
+                <View style={styles.staffProductHeading}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.staffCardTitle}>
+                      {language === 'en' ? product.name : product.nameAm}
+                    </Text>
+                    <Text style={styles.staffMeta}>
+                      {product.department} · {product.status === 'draft' ? t.draft : t.published}
+                    </Text>
+                  </View>
+                  {product.status === 'draft' && (
+                    <TouchableOpacity
+                      style={styles.primarySmallButton}
+                      onPress={() => setProducts((current) => current.map((item) =>
+                        item.id === product.id ? { ...item, status: 'published' } : item,
+                      ))}
+                    >
+                      <Text style={styles.primarySmallButtonText}>{t.verifyPublish}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                {(product.variants ?? []).map((variant) => (
+                  <View key={variant.id} style={styles.stockRow}>
+                    <View style={styles.stockTextWrap}>
+                      <Text style={styles.staffMeta}>{variant.size} · {variant.color}</Text>
+                      <Text style={styles.stockNumber}>{t.stock}: {variant.stock}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.stockAdjustButton}
+                      onPress={() => adjustStock(product.id, variant.id, 1, 'restock')}
+                    >
+                      <Text style={styles.stockAdjustText}>+1</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.saleAdjustButton}
+                      onPress={() => adjustStock(product.id, variant.id, -1, 'sale')}
+                    >
+                      <Text style={styles.saleAdjustText}>−1</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            ))}
+
+            <Text style={styles.staffSectionTitle}>{t.inventoryHistory}</Text>
+            {movements.length === 0 ? (
+              <Text style={styles.emptyText}>{t.noMovements}</Text>
+            ) : (
+              movements.slice(0, 20).map((movement) => {
+                const product = products.find((item) => item.id === movement.productId);
+                const variant = product?.variants?.find((item) => item.id === movement.variantId);
+                return (
+                  <Text key={movement.id} style={styles.staffMeta}>
+                    {new Date(movement.createdAt).toLocaleString()} · {product?.name ?? movement.productId} · {variant?.size ?? ''} {variant?.color ?? ''} · {movement.kind} {movement.quantity > 0 ? '+' : ''}{movement.quantity}
+                  </Text>
+                );
+              })
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+    </SafeAreaView>
+    </GestureHandlerRootView>
+  );
+}
+
+const styles = StyleSheet.create({
+  gestureRoot: { flex: 1 },
+  safe: { flex: 1, backgroundColor: COLORS.paper, paddingTop: StatusBar.currentHeight ?? 0 },
+  header: { paddingHorizontal: 18, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  brand: { flexDirection: 'row', alignItems: 'center' },
+  brandMark: { width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.orange, alignItems: 'center', justifyContent: 'center', marginRight: 9 },
+  brandMarkText: { color: COLORS.white, fontSize: 22, fontWeight: '900' },
+  brandName: { color: COLORS.ink, fontSize: 23, fontWeight: '800', letterSpacing: -0.5 },
+  brandSub: { color: COLORS.muted, fontSize: 8, letterSpacing: 1.1, marginTop: 1 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  headerIconWrap: { position: 'relative' },
+  smallButton: { backgroundColor: COLORS.white, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8 },
+  languageText: { color: COLORS.ink, fontWeight: '700', fontSize: 13 },
+  iconButton: { width: 38, height: 38, borderRadius: 13, backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center' },
+  iconText: { color: COLORS.ink, fontSize: 23 },
+  cartBadge: { position: 'absolute', top: -3, right: -3, minWidth: 17, height: 17, borderRadius: 9, backgroundColor: COLORS.orange, alignItems: 'center', justifyContent: 'center' },
+  cartBadgeText: { color: COLORS.white, fontSize: 10, fontWeight: '800' },
+  content: { paddingHorizontal: 18, paddingBottom: 28 },
+  searchBox: { height: 48, borderRadius: 14, backgroundColor: COLORS.white, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, marginBottom: 16 },
+  searchIcon: { color: COLORS.muted, fontSize: 24, marginRight: 8 },
+  searchInput: { flex: 1, color: COLORS.ink, fontSize: 14 },
+  banner: { minHeight: 185, borderRadius: 20, backgroundColor: COLORS.ink, padding: 20, overflow: 'hidden', marginBottom: 22 },
+  bannerTop: { color: COLORS.orange, fontSize: 10, fontWeight: '800', letterSpacing: 1.3, marginBottom: 13 },
+  bannerTitle: { color: COLORS.white, fontSize: 25, fontWeight: '800', maxWidth: '78%' },
+  bannerText: { color: '#E3E0E5', fontSize: 13, marginTop: 6, maxWidth: '75%' },
+  bannerButton: { alignSelf: 'flex-start', backgroundColor: COLORS.orange, borderRadius: 10, paddingHorizontal: 13, paddingVertical: 9, marginTop: 14 },
+  bannerButtonText: { color: COLORS.ink, fontSize: 12, fontWeight: '800' },
+  bannerAccent: { width: 115, height: 115, borderRadius: 58, borderWidth: 20, borderColor: '#393741', position: 'absolute', right: -23, bottom: -32 },
+  sectionTitle: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
+  chipRow: { marginTop: 11, marginBottom: 21 },
+  chip: { paddingHorizontal: 17, paddingVertical: 10, backgroundColor: COLORS.white, borderRadius: 18, marginRight: 8, borderWidth: 1, borderColor: COLORS.line },
+  chipActive: { backgroundColor: COLORS.ink, borderColor: COLORS.ink },
+  chipText: { color: COLORS.ink, fontSize: 13, fontWeight: '600' },
+  chipTextActive: { color: COLORS.white },
+  listHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  countText: { color: COLORS.muted, fontSize: 12 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  card: { width: '48.5%', backgroundColor: COLORS.white, borderRadius: 16, padding: 8, marginBottom: 13 },
+  productPhoto: { height: 145, borderRadius: 12, alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' },
+  productRealPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 12 },
+  productEmoji: { fontSize: 55 },
+  photoLabel: { position: 'absolute', bottom: 8, left: 8, color: '#716C68', fontSize: 8, letterSpacing: 0.8, fontWeight: '700' },
+  photoTapArea: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
+  heartButton: { position: 'absolute', top: 7, right: 7, width: 30, height: 30, borderRadius: 15, backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center' },
+  heartText: { color: COLORS.ink, fontSize: 18 },
+  productName: { color: COLORS.ink, fontSize: 14, fontWeight: '700', marginTop: 9, minHeight: 35 },
+  sizeText: { color: COLORS.muted, fontSize: 10, marginTop: 3 },
+  cardBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 9 },
+  price: { color: COLORS.ink, fontSize: 13, fontWeight: '800' },
+  addButton: { width: 30, height: 30, borderRadius: 10, backgroundColor: COLORS.orange, alignItems: 'center', justifyContent: 'center' },
+  addButtonText: { color: COLORS.ink, fontSize: 21, fontWeight: '700', marginTop: -2 },
+  emptyBox: { backgroundColor: COLORS.white, borderRadius: 16, padding: 25, alignItems: 'center', marginBottom: 15 },
+  emptyIcon: { fontSize: 34, color: COLORS.orange, marginBottom: 8 },
+  emptyText: { color: COLORS.muted, textAlign: 'center', fontSize: 13 },
+  demoNote: { color: COLORS.muted, fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: 8, marginBottom: 14 },
+  detailsLink: { color: '#B76D2A', fontSize: 11, fontWeight: '700', marginTop: 4 },
+  modalSafe: { flex: 1, backgroundColor: COLORS.paper, paddingTop: StatusBar.currentHeight ?? 0 },
+  detailHeader: { height: 54, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  backButton: { width: 38, height: 38, borderRadius: 12, backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center' },
+  backText: { color: COLORS.ink, fontSize: 32, marginTop: -4 },
+  detailHeaderTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800' },
+  detailContent: { padding: 18, paddingBottom: 34 },
+  detailPhoto: { height: 300, borderRadius: 20, alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' },
+  zoomTouchArea: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  detailRealPhoto: { width: '100%', height: '100%' },
+  photoCounter: { position: 'absolute', right: 10, bottom: 10, backgroundColor: 'rgba(39, 38, 45, 0.78)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
+  photoCounterText: { color: COLORS.white, fontSize: 11, fontWeight: '800' },
+  galleryRow: { marginTop: 12, marginBottom: 8 },
+  galleryThumb: { width: 82, padding: 4, marginRight: 8, borderRadius: 12, backgroundColor: COLORS.white, borderWidth: 2, borderColor: COLORS.line, alignItems: 'center' },
+  galleryThumbActive: { borderColor: COLORS.orange },
+  galleryThumbImage: { width: 68, height: 68, borderRadius: 8 },
+  galleryCaption: { color: COLORS.ink, fontSize: 10, marginTop: 4 },
+  detailEmoji: { fontSize: 100 },
+  detailName: { color: COLORS.ink, fontSize: 23, fontWeight: '800', marginTop: 18 },
+  detailPrice: { color: COLORS.ink, fontSize: 20, fontWeight: '800', marginTop: 7 },
+  detailSizeLabel: { color: COLORS.ink, fontSize: 14, fontWeight: '700', marginTop: 24 },
+  sizeRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12, gap: 8 },
+  sizeChip: { minWidth: 48, paddingHorizontal: 14, paddingVertical: 11, borderRadius: 12, backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.line, alignItems: 'center' },
+  sizeChipActive: { backgroundColor: COLORS.ink, borderColor: COLORS.ink },
+  sizeChipText: { color: COLORS.ink, fontWeight: '700' },
+  sizeChipTextActive: { color: COLORS.white },
+  detailNote: { color: COLORS.muted, fontSize: 12, lineHeight: 18, marginTop: 14 },
+  detailAddButton: { backgroundColor: COLORS.orange, paddingVertical: 16, borderRadius: 14, alignItems: 'center', marginTop: 24 },
+  detailAddButtonText: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
+  cartModalSafe: { flex: 1, backgroundColor: COLORS.paper, paddingTop: StatusBar.currentHeight ?? 0 },
+  cartHeader: { height: 58, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cartHeaderTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '800' },
+  cartContent: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 20 },
+  emptyCartBox: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
+  cartItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white, borderRadius: 16, padding: 10, marginBottom: 11 },
+  cartThumb: { width: 76, height: 86, borderRadius: 12, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  cartThumbImage: { width: '100%', height: '100%' },
+  cartThumbEmoji: { fontSize: 34 },
+  cartItemInfo: { flex: 1, marginLeft: 11 },
+  cartItemName: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
+  cartItemMeta: { color: COLORS.muted, fontSize: 11, marginTop: 3 },
+  cartItemPrice: { color: COLORS.ink, fontSize: 13, fontWeight: '800', marginTop: 4 },
+  cartControls: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  quantityButton: { width: 28, height: 28, borderRadius: 9, backgroundColor: COLORS.paper, alignItems: 'center', justifyContent: 'center' },
+  quantityButtonText: { color: COLORS.ink, fontSize: 19, fontWeight: '700', marginTop: -2 },
+  quantityText: { minWidth: 27, color: COLORS.ink, fontSize: 13, fontWeight: '800', textAlign: 'center' },
+  removeButton: { marginLeft: 'auto', paddingHorizontal: 8, paddingVertical: 5 },
+  removeText: { color: '#B44949', fontSize: 11, fontWeight: '700' },
+  cartFooter: { paddingHorizontal: 18, paddingTop: 14, paddingBottom: 18, backgroundColor: COLORS.white, borderTopWidth: 1, borderTopColor: COLORS.line },
+  cartSubtotalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cartSubtotalLabel: { color: COLORS.ink, fontSize: 15, fontWeight: '700' },
+  cartSubtotalValue: { color: COLORS.ink, fontSize: 17, fontWeight: '900' },
+  checkoutNote: { color: COLORS.muted, fontSize: 11, lineHeight: 16, marginTop: 8 },
+  loadingText: { color: COLORS.ink, textAlign: 'center', marginTop: 40, fontSize: 16, fontWeight: '700' },
+  formContent: { padding: 18, paddingBottom: 36 },
+  formInput: { backgroundColor: COLORS.white, borderRadius: 12, borderWidth: 1, borderColor: COLORS.line, paddingHorizontal: 13, paddingVertical: 12, color: COLORS.ink, fontSize: 14, marginTop: 10 },
+  formLabel: { color: COLORS.ink, fontSize: 13, fontWeight: '700', marginTop: 18 },
+  localWarning: { color: '#774B18', backgroundColor: '#FFF1D8', padding: 12, borderRadius: 12, fontSize: 12, lineHeight: 18, marginBottom: 12 },
+  primaryButton: { backgroundColor: COLORS.orange, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 13, alignItems: 'center', marginTop: 14 },
+  primaryButtonText: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
+  orderRequestButton: { backgroundColor: COLORS.ink, paddingVertical: 13, borderRadius: 12, alignItems: 'center', marginTop: 12 },
+  orderRequestButtonText: { color: COLORS.white, fontSize: 13, fontWeight: '800' },
+  staffSafe: { flex: 1, backgroundColor: COLORS.paper, paddingTop: StatusBar.currentHeight ?? 0 },
+  staffContent: { padding: 16, paddingBottom: 40 },
+  staffSectionTitle: { color: COLORS.ink, fontSize: 17, fontWeight: '900', marginTop: 22, marginBottom: 10 },
+  staffCard: { backgroundColor: COLORS.white, borderRadius: 14, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: COLORS.line },
+  staffCardTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
+  staffMeta: { color: COLORS.muted, fontSize: 11, lineHeight: 16, marginTop: 4 },
+  staffActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+  staffProductHeading: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  primarySmallButton: { backgroundColor: COLORS.ink, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  primarySmallButtonText: { color: COLORS.white, fontSize: 10, fontWeight: '800' },
+  secondarySmallButton: { backgroundColor: '#F3E9E8', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  secondarySmallButtonText: { color: '#A23E3E', fontSize: 10, fontWeight: '800' },
+  stockRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: COLORS.line, gap: 7 },
+  stockTextWrap: { flex: 1 },
+  stockNumber: { color: COLORS.ink, fontSize: 11, fontWeight: '800', marginTop: 3 },
+  stockAdjustButton: { minWidth: 44, paddingVertical: 8, borderRadius: 9, backgroundColor: '#E5F2E7', alignItems: 'center' },
+  stockAdjustText: { color: '#256333', fontSize: 11, fontWeight: '800' },
+  saleAdjustButton: { minWidth: 44, paddingVertical: 8, borderRadius: 9, backgroundColor: '#F6E5E3', alignItems: 'center' },
+  saleAdjustText: { color: '#A23E3E', fontSize: 11, fontWeight: '800' },
+});

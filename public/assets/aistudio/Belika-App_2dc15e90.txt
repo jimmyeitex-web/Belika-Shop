@@ -1,0 +1,482 @@
+import React, { useMemo, useState } from 'react';
+import {
+  Alert,
+  Image,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+type Department = 'All' | 'Men' | 'Women' | 'Kids';
+type Language = 'en' | 'am';
+
+type Product = {
+  id: string;
+  department: Exclude<Department, 'All'>;
+  name: string;
+  nameAm: string;
+  price: number;
+  sizes: string;
+  emoji: string;
+  tint: string;
+  images?: any[];
+  imageLabels?: string[];
+};
+
+const PRODUCTS: Product[] = [
+  { id: 'cotton-tee', department: 'Men', name: 'Cotton T-shirt', nameAm: 'የጥጥ ቲሸርት', price: 3000, sizes: 'M–XXL', emoji: '👕', tint: '#E8E2D7' },
+  { id: 'cargo', department: 'Men', name: 'Cargo trousers', nameAm: 'ካርጎ ሱሪ', price: 4500, sizes: 'M–3XL', emoji: '👖', tint: '#D8DDCF' },
+  { id: 'jeans-shirt', department: 'Men', name: 'Jeans shirt jacket', nameAm: 'የጂንስ ሸሚዝ ጃኬት', price: 4800, sizes: 'M–XXL', emoji: '👔', tint: '#DCE4EB' },
+  { id: 'diplomat-jacket', department: 'Men', name: 'Diplomat jacket', nameAm: 'ዲፕሎማት ጃኬት', price: 7500, sizes: 'L–XXL', emoji: '🧥', tint: '#DFE0E3' },
+  {
+    id: 'polo',
+    department: 'Men',
+    name: 'Polo T-shirt',
+    nameAm: 'ፖሎ ቲሸርት',
+    price: 3200,
+    sizes: 'M–XXL',
+    emoji: '👕',
+    tint: '#E3E8EC',
+    images: [
+      require('./assets/polo-tan.jpg'),
+      require('./assets/polo-white.jpg'),
+      require('./assets/polo-lightgray.jpg'),
+    ],
+    imageLabels: ['Tan', 'White', 'Pale grey'],
+  },
+  { id: 'kemis', department: 'Women', name: 'Kemis dress', nameAm: 'ቀሚስ', price: 1800, sizes: 'Free size', emoji: '👗', tint: '#F1E1E2' },
+  { id: 'comfort-flats', department: 'Women', name: 'Comfort flats', nameAm: 'ምቹ ጫማ', price: 3200, sizes: 'Sizes available', emoji: '🥿', tint: '#EAE0D6' },
+];
+
+const COPY = {
+  en: {
+    search: 'Search Belika products',
+    departments: 'Shop by department',
+    featured: 'A few picks to start',
+    all: 'All',
+    men: 'Men',
+    women: 'Women',
+    kids: 'Kids',
+    bannerTop: 'BELIKA  /  EVERYDAY STYLE',
+    bannerTitle: 'Find your next favourite.',
+    bannerText: 'Explore styles for Men, Women and Kids.',
+    bannerButton: 'Explore products',
+    add: 'Add',
+    sizes: 'Sizes',
+    demo: 'Demo catalog · confirm price, size and stock with the shop',
+    empty: 'No matching products yet.',
+    kidsSoon: 'Kids products will appear here when we add examples.',
+    wishlist: 'Wishlist',
+    cart: 'Demo cart',
+    cartItems: 'item(s) added. Checkout comes later.',
+    samplePhoto: 'SAMPLE PHOTO',
+    viewDetails: 'View details',
+    details: 'Product details',
+    chooseSize: 'Choose a size',
+    sizeHelp: 'Sizes are based on the post. Confirm current availability with the shop.',
+    photoHelp: 'Colors are visual estimates from these photos; confirm color and availability with the shop.',
+    addToCart: 'Add to cart',
+  },
+  am: {
+    search: 'የቤሊካ ምርቶችን ይፈልጉ',
+    departments: 'በክፍል ይምረጡ',
+    featured: 'ለመጀመር የተመረጡ',
+    all: 'ሁሉም',
+    men: 'ወንዶች',
+    women: 'ሴቶች',
+    kids: 'ልጆች',
+    bannerTop: 'ቤሊካ  / የዕለት ተዕለት ዘይቤ',
+    bannerTitle: 'የሚወዱትን ዘይቤ ያግኙ።',
+    bannerText: 'የወንዶች፣ የሴቶች እና የልጆች ምርቶችን ይመልከቱ።',
+    bannerButton: 'ምርቶችን ይመልከቱ',
+    add: 'ጨምር',
+    sizes: 'መጠን',
+    demo: 'የሙከራ ካታሎግ · ዋጋን፣ መጠንን እና ክምችትን ያረጋግጡ',
+    empty: 'የሚዛመድ ምርት አልተገኘም።',
+    kidsSoon: 'የልጆች ምርቶችን ስናክል እዚህ ይታያሉ።',
+    wishlist: 'የምወዳቸው',
+    cart: 'የሙከራ ጋሪ',
+    cartItems: 'እቃ(ዎች) ተጨምረዋል። ግዢ በኋላ ይጨመራል።',
+    samplePhoto: 'የናሙና ምስል',
+    viewDetails: 'ዝርዝሩን ይመልከቱ',
+    details: 'የምርት ዝርዝር',
+    chooseSize: 'መጠን ይምረጡ',
+    sizeHelp: 'መጠኖቹ ከፖስቱ የተወሰዱ ናቸው፤ ከሱቁ ጋር ያረጋግጡ።',
+    photoHelp: 'ቀለሞቹ ከፎቶዎቹ የተገመቱ ናቸው፤ ከሱቁ ጋር ያረጋግጡ።',
+    addToCart: 'ወደ ጋሪ ጨምር',
+  },
+};
+
+const COLORS = {
+  ink: '#27262D',
+  orange: '#E79A50',
+  paper: '#F7F5F0',
+  white: '#FFFFFF',
+  muted: '#77747B',
+  line: '#EAE6DF',
+};
+
+export default function App() {
+  const [language, setLanguage] = useState<Language>('en');
+  const [department, setDepartment] = useState<Department>('All');
+  const [query, setQuery] = useState('');
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [showWishlist, setShowWishlist] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const t = COPY[language];
+
+  const results = useMemo(() => {
+    const search = query.trim().toLowerCase();
+    return PRODUCTS.filter((product) => {
+      const inDepartment = department === 'All' || product.department === department;
+      const matchesSearch =
+        !search ||
+        product.name.toLowerCase().includes(search) ||
+        product.nameAm.includes(query.trim());
+      const isSaved = !showWishlist || favorites.includes(product.id);
+      return inDepartment && matchesSearch && isSaved;
+    });
+  }, [department, query, showWishlist, favorites]);
+
+  const sizeOptions = (product: Product): string[] => {
+    if (product.sizes === 'M–XXL') return ['M', 'L', 'XL', 'XXL'];
+    if (product.sizes === 'M–3XL') return ['M', 'L', 'XL', 'XXL', '3XL'];
+    if (product.sizes === 'L–XXL') return ['L', 'XL', 'XXL'];
+    if (product.sizes === 'Free size') return ['Free size'];
+    return [];
+  };
+
+  const departmentLabel = (item: Department) => {
+    if (language === 'en') return item;
+    return { All: t.all, Men: t.men, Women: t.women, Kids: t.kids }[item];
+  };
+
+  const toggleFavorite = (id: string) => {
+    setFavorites((current) =>
+      current.includes(id) ? current.filter((saved) => saved !== id) : [...current, id],
+    );
+  };
+
+  const departments: Department[] = ['All', 'Men', 'Women', 'Kids'];
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.paper} />
+      <View style={styles.header}>
+        <View style={styles.brand}>
+          <View style={styles.brandMark}><Text style={styles.brandMarkText}>B</Text></View>
+          <View>
+            <Text style={styles.brandName}>Belika</Text>
+            <Text style={styles.brandSub}>MEN  ·  WOMEN  ·  KIDS</Text>
+          </View>
+        </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.smallButton} onPress={() => setLanguage(language === 'en' ? 'am' : 'en')}>
+            <Text style={styles.languageText}>{language === 'en' ? 'አማ' : 'EN'}</Text>
+          </TouchableOpacity>
+          <View style={styles.headerIconWrap}>
+            <TouchableOpacity style={styles.iconButton} onPress={() => setShowWishlist(!showWishlist)}>
+              <Text style={styles.iconText}>{showWishlist ? '♥' : '♡'}</Text>
+            </TouchableOpacity>
+            {favorites.length > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{favorites.length}</Text>
+              </View>
+            )}
+          </View>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => Alert.alert(t.cart, `${cartCount} ${t.cartItems}`)}
+          >
+            <Text style={styles.iconText}>▱</Text>
+            {cartCount > 0 && <View style={styles.cartBadge}><Text style={styles.cartBadgeText}>{cartCount}</Text></View>}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.searchBox}>
+          <Text style={styles.searchIcon}>⌕</Text>
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder={t.search}
+            placeholderTextColor={COLORS.muted}
+            style={styles.searchInput}
+          />
+        </View>
+
+        <View style={styles.banner}>
+          <Text style={styles.bannerTop}>{t.bannerTop}</Text>
+          <Text style={styles.bannerTitle}>{t.bannerTitle}</Text>
+          <Text style={styles.bannerText}>{t.bannerText}</Text>
+          <TouchableOpacity
+            style={styles.bannerButton}
+            onPress={() => { setShowWishlist(false); setDepartment('All'); setQuery(''); }}
+          >
+            <Text style={styles.bannerButtonText}>{t.bannerButton}  →</Text>
+          </TouchableOpacity>
+          <View style={styles.bannerAccent} />
+        </View>
+
+        <Text style={styles.sectionTitle}>{t.departments}</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+          {departments.map((item) => (
+            <TouchableOpacity
+              key={item}
+              onPress={() => { setDepartment(item); setShowWishlist(false); }}
+              style={[styles.chip, department === item && !showWishlist && styles.chipActive]}
+            >
+              <Text style={[styles.chipText, department === item && !showWishlist && styles.chipTextActive]}>
+                {departmentLabel(item)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        <View style={styles.listHeading}>
+          <Text style={styles.sectionTitle}>{showWishlist ? t.wishlist : t.featured}</Text>
+          <Text style={styles.countText}>{results.length}</Text>
+        </View>
+
+        {results.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyIcon}>{showWishlist ? '♡' : '⌕'}</Text>
+            <Text style={styles.emptyText}>
+              {department === 'Kids' && !showWishlist ? t.kidsSoon : t.empty}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {results.map((product) => (
+              <View key={product.id} style={styles.card}>
+                <View style={[styles.productPhoto, { backgroundColor: product.tint }]}>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    style={styles.photoTapArea}
+                    onPress={() => { setSelectedProduct(product); setSelectedSize(null); setSelectedImageIndex(0); }}
+                  >
+                    {product.images && product.images.length > 0 ? (
+                      <Image source={product.images[0]} style={styles.productRealPhoto} resizeMode="cover" />
+                    ) : (
+                      <Text style={styles.productEmoji}>{product.emoji}</Text>
+                    )}
+                    {(!product.images || product.images.length === 0) && (
+                      <Text style={styles.photoLabel}>{t.samplePhoto}</Text>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.heartButton} onPress={() => toggleFavorite(product.id)}>
+                    <Text style={styles.heartText}>{favorites.includes(product.id) ? '♥' : '♡'}</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity onPress={() => { setSelectedProduct(product); setSelectedSize(null); setSelectedImageIndex(0); }}>
+                  <Text style={styles.productName} numberOfLines={2}>
+                    {language === 'en' ? product.name : product.nameAm}
+                  </Text>
+                  <Text style={styles.detailsLink}>{t.viewDetails} →</Text>
+                </TouchableOpacity>
+                <Text style={styles.sizeText}>{t.sizes}: {product.sizes}</Text>
+                <View style={styles.cardBottom}>
+                  <Text style={styles.price}>ETB {product.price.toLocaleString('en-US')}</Text>
+                  <TouchableOpacity style={styles.addButton} onPress={() => setCartCount(cartCount + 1)}>
+                    <Text style={styles.addButtonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <Text style={styles.demoNote}>{t.demo}</Text>
+      </ScrollView>
+
+      <Modal
+        visible={selectedProduct !== null}
+        animationType="slide"
+        onRequestClose={() => setSelectedProduct(null)}
+      >
+        <SafeAreaView style={styles.modalSafe}>
+          {selectedProduct && (
+            <>
+              <View style={styles.detailHeader}>
+                <TouchableOpacity onPress={() => setSelectedProduct(null)} style={styles.backButton}>
+                  <Text style={styles.backText}>‹</Text>
+                </TouchableOpacity>
+                <Text style={styles.detailHeaderTitle}>{t.details}</Text>
+                <View style={styles.backButton} />
+              </View>
+              <ScrollView contentContainerStyle={styles.detailContent}>
+                <View style={[styles.detailPhoto, { backgroundColor: selectedProduct.tint }]}>
+                  {selectedProduct.images && selectedProduct.images.length > 0 ? (
+                    <Image
+                      source={selectedProduct.images[selectedImageIndex] ?? selectedProduct.images[0]}
+                      style={styles.detailRealPhoto}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <>
+                      <Text style={styles.detailEmoji}>{selectedProduct.emoji}</Text>
+                      <Text style={styles.photoLabel}>{t.samplePhoto}</Text>
+                    </>
+                  )}
+                </View>
+                {selectedProduct.images && selectedProduct.images.length > 1 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.galleryRow}>
+                    {selectedProduct.images.map((image, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        onPress={() => setSelectedImageIndex(index)}
+                        style={[styles.galleryThumb, selectedImageIndex === index && styles.galleryThumbActive]}
+                      >
+                        <Image source={image} style={styles.galleryThumbImage} resizeMode="cover" />
+                        <Text style={styles.galleryCaption}>{selectedProduct.imageLabels?.[index] ?? ''}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
+                <Text style={styles.detailName}>
+                  {language === 'en' ? selectedProduct.name : selectedProduct.nameAm}
+                </Text>
+                <Text style={styles.detailPrice}>
+                  ETB {selectedProduct.price.toLocaleString('en-US')}
+                </Text>
+                <Text style={styles.detailSizeLabel}>
+                  {t.chooseSize} · {selectedProduct.sizes}
+                </Text>
+
+                {sizeOptions(selectedProduct).length > 0 ? (
+                  <View style={styles.sizeRow}>
+                    {sizeOptions(selectedProduct).map((size) => (
+                      <TouchableOpacity
+                        key={size}
+                        onPress={() => setSelectedSize(size)}
+                        style={[styles.sizeChip, selectedSize === size && styles.sizeChipActive]}
+                      >
+                        <Text style={[styles.sizeChipText, selectedSize === size && styles.sizeChipTextActive]}>
+                          {size}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.detailNote}>{t.sizeHelp}</Text>
+                )}
+
+                <Text style={styles.detailNote}>{t.sizeHelp}</Text>
+                <Text style={styles.detailNote}>{t.photoHelp}</Text>
+
+                <TouchableOpacity
+                  style={styles.detailAddButton}
+                  onPress={() => {
+                    const requiresSize = selectedProduct
+                      ? sizeOptions(selectedProduct).length > 0
+                      : false;
+                    if (requiresSize && selectedSize === null) {
+                      Alert.alert(t.chooseSize);
+                      return;
+                    }
+                    setCartCount((current) => current + 1);
+                    setSelectedProduct(null);
+                  }}
+                >
+                  <Text style={styles.detailAddButtonText}>{t.addToCart}  +</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </>
+          )}
+        </SafeAreaView>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: COLORS.paper, paddingTop: StatusBar.currentHeight ?? 0 },
+  header: { paddingHorizontal: 18, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  brand: { flexDirection: 'row', alignItems: 'center' },
+  brandMark: { width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.orange, alignItems: 'center', justifyContent: 'center', marginRight: 9 },
+  brandMarkText: { color: COLORS.white, fontSize: 22, fontWeight: '900' },
+  brandName: { color: COLORS.ink, fontSize: 23, fontWeight: '800', letterSpacing: -0.5 },
+  brandSub: { color: COLORS.muted, fontSize: 8, letterSpacing: 1.1, marginTop: 1 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  headerIconWrap: { position: 'relative' },
+  smallButton: { backgroundColor: COLORS.white, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8 },
+  languageText: { color: COLORS.ink, fontWeight: '700', fontSize: 13 },
+  iconButton: { width: 38, height: 38, borderRadius: 13, backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center' },
+  iconText: { color: COLORS.ink, fontSize: 23 },
+  cartBadge: { position: 'absolute', top: -3, right: -3, minWidth: 17, height: 17, borderRadius: 9, backgroundColor: COLORS.orange, alignItems: 'center', justifyContent: 'center' },
+  cartBadgeText: { color: COLORS.white, fontSize: 10, fontWeight: '800' },
+  content: { paddingHorizontal: 18, paddingBottom: 28 },
+  searchBox: { height: 48, borderRadius: 14, backgroundColor: COLORS.white, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, marginBottom: 16 },
+  searchIcon: { color: COLORS.muted, fontSize: 24, marginRight: 8 },
+  searchInput: { flex: 1, color: COLORS.ink, fontSize: 14 },
+  banner: { minHeight: 185, borderRadius: 20, backgroundColor: COLORS.ink, padding: 20, overflow: 'hidden', marginBottom: 22 },
+  bannerTop: { color: COLORS.orange, fontSize: 10, fontWeight: '800', letterSpacing: 1.3, marginBottom: 13 },
+  bannerTitle: { color: COLORS.white, fontSize: 25, fontWeight: '800', maxWidth: '78%' },
+  bannerText: { color: '#E3E0E5', fontSize: 13, marginTop: 6, maxWidth: '75%' },
+  bannerButton: { alignSelf: 'flex-start', backgroundColor: COLORS.orange, borderRadius: 10, paddingHorizontal: 13, paddingVertical: 9, marginTop: 14 },
+  bannerButtonText: { color: COLORS.ink, fontSize: 12, fontWeight: '800' },
+  bannerAccent: { width: 115, height: 115, borderRadius: 58, borderWidth: 20, borderColor: '#393741', position: 'absolute', right: -23, bottom: -32 },
+  sectionTitle: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
+  chipRow: { marginTop: 11, marginBottom: 21 },
+  chip: { paddingHorizontal: 17, paddingVertical: 10, backgroundColor: COLORS.white, borderRadius: 18, marginRight: 8, borderWidth: 1, borderColor: COLORS.line },
+  chipActive: { backgroundColor: COLORS.ink, borderColor: COLORS.ink },
+  chipText: { color: COLORS.ink, fontSize: 13, fontWeight: '600' },
+  chipTextActive: { color: COLORS.white },
+  listHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  countText: { color: COLORS.muted, fontSize: 12 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  card: { width: '48.5%', backgroundColor: COLORS.white, borderRadius: 16, padding: 8, marginBottom: 13 },
+  productPhoto: { height: 145, borderRadius: 12, alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' },
+  productRealPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 12 },
+  productEmoji: { fontSize: 55 },
+  photoLabel: { position: 'absolute', bottom: 8, left: 8, color: '#716C68', fontSize: 8, letterSpacing: 0.8, fontWeight: '700' },
+  photoTapArea: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
+  heartButton: { position: 'absolute', top: 7, right: 7, width: 30, height: 30, borderRadius: 15, backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center' },
+  heartText: { color: COLORS.ink, fontSize: 18 },
+  productName: { color: COLORS.ink, fontSize: 14, fontWeight: '700', marginTop: 9, minHeight: 35 },
+  sizeText: { color: COLORS.muted, fontSize: 10, marginTop: 3 },
+  cardBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 9 },
+  price: { color: COLORS.ink, fontSize: 13, fontWeight: '800' },
+  addButton: { width: 30, height: 30, borderRadius: 10, backgroundColor: COLORS.orange, alignItems: 'center', justifyContent: 'center' },
+  addButtonText: { color: COLORS.ink, fontSize: 21, fontWeight: '700', marginTop: -2 },
+  emptyBox: { backgroundColor: COLORS.white, borderRadius: 16, padding: 25, alignItems: 'center', marginBottom: 15 },
+  emptyIcon: { fontSize: 34, color: COLORS.orange, marginBottom: 8 },
+  emptyText: { color: COLORS.muted, textAlign: 'center', fontSize: 13 },
+  demoNote: { color: COLORS.muted, fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: 8, marginBottom: 14 },
+  detailsLink: { color: '#B76D2A', fontSize: 11, fontWeight: '700', marginTop: 4 },
+  modalSafe: { flex: 1, backgroundColor: COLORS.paper, paddingTop: StatusBar.currentHeight ?? 0 },
+  detailHeader: { height: 54, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  backButton: { width: 38, height: 38, borderRadius: 12, backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center' },
+  backText: { color: COLORS.ink, fontSize: 32, marginTop: -4 },
+  detailHeaderTitle: { color: COLORS.ink, fontSize: 16, fontWeight: '800' },
+  detailContent: { padding: 18, paddingBottom: 34 },
+  detailPhoto: { height: 300, borderRadius: 20, alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' },
+  detailRealPhoto: { width: '100%', height: '100%' },
+  galleryRow: { marginTop: 12, marginBottom: 8 },
+  galleryThumb: { width: 82, padding: 4, marginRight: 8, borderRadius: 12, backgroundColor: COLORS.white, borderWidth: 2, borderColor: COLORS.line, alignItems: 'center' },
+  galleryThumbActive: { borderColor: COLORS.orange },
+  galleryThumbImage: { width: 68, height: 68, borderRadius: 8 },
+  galleryCaption: { color: COLORS.ink, fontSize: 10, marginTop: 4 },
+  detailEmoji: { fontSize: 100 },
+  detailName: { color: COLORS.ink, fontSize: 23, fontWeight: '800', marginTop: 18 },
+  detailPrice: { color: COLORS.ink, fontSize: 20, fontWeight: '800', marginTop: 7 },
+  detailSizeLabel: { color: COLORS.ink, fontSize: 14, fontWeight: '700', marginTop: 24 },
+  sizeRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12, gap: 8 },
+  sizeChip: { minWidth: 48, paddingHorizontal: 14, paddingVertical: 11, borderRadius: 12, backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.line, alignItems: 'center' },
+  sizeChipActive: { backgroundColor: COLORS.ink, borderColor: COLORS.ink },
+  sizeChipText: { color: COLORS.ink, fontWeight: '700' },
+  sizeChipTextActive: { color: COLORS.white },
+  detailNote: { color: COLORS.muted, fontSize: 12, lineHeight: 18, marginTop: 14 },
+  detailAddButton: { backgroundColor: COLORS.orange, paddingVertical: 16, borderRadius: 14, alignItems: 'center', marginTop: 24 },
+  detailAddButtonText: { color: COLORS.ink, fontSize: 15, fontWeight: '800' },
+});
